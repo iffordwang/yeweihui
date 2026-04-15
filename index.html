@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>业委会成立流程图</title>
+    <style>
+      :root {
+        --c-bg: #f8fafc;
+        --c-canvas: #ffffff;
+        --c-border: #cbd5e1;
+        --c-text-main: #0f172a;
+        --c-text-sub: #64748b;
+        --c-accent: #0f172a;
+        --c-current: #dc2626;
+        --font-ui: system-ui, -apple-system, 'Segoe UI', sans-serif;
+        --font-mono: 'SF Mono', Monaco, Consolas, monospace;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: var(--c-bg);
+        font-family: var(--font-ui);
+        color: var(--c-text-main);
+        padding: 40px;
+      }
+
+      .diagram-canvas {
+        background: var(--c-canvas);
+        border: 2px solid var(--c-border);
+        padding: 32px;
+        max-width: 1000px;
+        margin: 0 auto;
+      }
+
+      .diagram-header {
+        border-bottom: 1px solid var(--c-border);
+        padding-bottom: 16px;
+        margin-bottom: 32px;
+      }
+
+      .diagram-title {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--c-text-main);
+      }
+
+      .diagram-subtitle {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--c-text-sub);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 4px;
+      }
+
+      .timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+
+      .timeline-node {
+        display: flex;
+        position: relative;
+      }
+
+      .timeline-node:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        left: 95px;
+        top: 52px;
+        width: 2px;
+        height: 40px;
+        background: var(--c-border);
+      }
+
+      .timeline-date {
+        width: 110px;
+        flex-shrink: 0;
+        padding-top: 12px;
+      }
+
+      .date-range {
+        font-family: var(--font-mono);
+        font-size: 12px;
+        color: var(--c-text-sub);
+        line-height: 1.4;
+      }
+
+      .timeline-content {
+        flex: 1;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding-bottom: 40px;
+      }
+
+      .timeline-marker {
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--c-border);
+        background: var(--c-canvas);
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 10px;
+      }
+
+      .timeline-node--completed .timeline-marker {
+        border-color: var(--c-accent);
+        background: var(--c-accent);
+      }
+
+      .timeline-node--current .timeline-marker {
+        border-color: var(--c-current);
+        background: var(--c-current);
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+      }
+
+      .node-card {
+        flex: 1;
+        border: 1px solid var(--c-border);
+        padding: 16px 20px;
+        background: var(--c-canvas);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .timeline-node--current .node-card {
+        border-color: var(--c-current);
+        border-width: 2px;
+      }
+
+      .node-main {
+        flex: 1;
+      }
+
+      .node-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--c-text-main);
+        margin-bottom: 6px;
+      }
+
+      .node-status {
+        display: inline-block;
+        font-size: 10px;
+        font-family: var(--font-mono);
+        padding: 2px 8px;
+        border: 1px solid var(--c-border);
+        text-transform: uppercase;
+        margin-bottom: 8px;
+      }
+
+      .timeline-node--completed .node-status {
+        background: var(--c-accent);
+        color: var(--c-canvas);
+        border-color: var(--c-accent);
+      }
+
+      .timeline-node--current .node-status {
+        background: var(--c-current);
+        color: var(--c-canvas);
+        border-color: var(--c-current);
+      }
+
+      .node-desc {
+        font-size: 13px;
+        color: var(--c-text-sub);
+        line-height: 1.5;
+      }
+
+      .node-duration {
+        flex-shrink: 0;
+        text-align: right;
+        padding-left: 16px;
+        border-left: 1px solid var(--c-border);
+      }
+
+      .duration-label {
+        font-size: 10px;
+        color: var(--c-text-sub);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+      }
+
+      .duration-value {
+        font-family: var(--font-mono);
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--c-text-main);
+      }
+
+      .duration-unit {
+        font-size: 11px;
+        color: var(--c-text-sub);
+        margin-left: 2px;
+      }
+
+      .summary-section {
+        margin-top: 8px;
+        padding: 20px;
+        border: 2px solid var(--c-accent);
+        background: var(--c-canvas);
+      }
+
+      .summary-header {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--c-text-sub);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--c-border);
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+      }
+
+      .summary-item {
+        text-align: center;
+      }
+
+      .summary-value {
+        font-family: var(--font-mono);
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--c-text-main);
+      }
+
+      .summary-label {
+        font-size: 11px;
+        color: var(--c-text-sub);
+        margin-top: 4px;
+      }
+
+      .legend {
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid var(--c-border);
+        display: flex;
+        gap: 24px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--c-text-sub);
+      }
+
+      .legend-marker {
+        width: 12px;
+        height: 12px;
+        border: 2px solid var(--c-border);
+        border-radius: 50%;
+      }
+
+      .legend-marker--completed {
+        border-color: var(--c-accent);
+        background: var(--c-accent);
+      }
+
+      .legend-marker--current {
+        border-color: var(--c-current);
+        background: var(--c-current);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="diagram-canvas">
+      <div class="diagram-header">
+        <h1 class="diagram-title">业委会成立流程图</h1>
+        <p class="diagram-subtitle">PROCESS TIMELINE / 2026年3月-4月</p>
+      </div>
+
+      <div class="timeline">
+        <!-- 节点1: 筹备组报名 -->
+        <div class="timeline-node timeline-node--completed">
+          <div class="timeline-date">
+            <div class="date-range">3月10日<br/>-<br/>3月17日</div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-marker"></div>
+            <div class="node-card">
+              <div class="node-main">
+                <div class="node-title">筹备组报名</div>
+                <span class="node-status">已完成</span>
+                <div class="node-desc">接受业主报名参与筹备组工作</div>
+              </div>
+              <div class="node-duration">
+                <div class="duration-label">耗时</div>
+                <div class="duration-value">8<span class="duration-unit">天</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 节点2: 人员审核 -->
+        <div class="timeline-node timeline-node--completed">
+          <div class="timeline-date">
+            <div class="date-range">3月18日<br/>-<br/>3月23日</div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-marker"></div>
+            <div class="node-card">
+              <div class="node-main">
+                <div class="node-title">人员审核</div>
+                <span class="node-status">已完成</span>
+                <div class="node-desc">对报名人员进行资格审核</div>
+              </div>
+              <div class="node-duration">
+                <div class="duration-label">耗时</div>
+                <div class="duration-value">6<span class="duration-unit">天</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 节点3: 筹备组成员公示 -->
+        <div class="timeline-node timeline-node--completed">
+          <div class="timeline-date">
+            <div class="date-range">3月24日<br/>-<br/>3月31日</div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-marker"></div>
+            <div class="node-card">
+              <div class="node-main">
+                <div class="node-title">筹备组成员公示</div>
+                <span class="node-status">已完成</span>
+                <div class="node-desc">公示筹备组成员名单，接受业主监督</div>
+              </div>
+              <div class="node-duration">
+                <div class="duration-label">耗时</div>
+                <div class="duration-value">8<span class="duration-unit">天</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 节点4: 街道办事处二次审核 -->
+        <div class="timeline-node timeline-node--current">
+          <div class="timeline-date">
+            <div class="date-range">4月1日<br/>-<br/>4月14日</div>
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-marker"></div>
+            <div class="node-card">
+              <div class="node-main">
+                <div class="node-title">街道办事处人员二次审核</div>
+                <span class="node-status">进行中</span>
+                <div class="node-desc">街道办事处对筹备组成员进行复核确认</div>
+              </div>
+              <div class="node-duration">
+                <div class="duration-label">已耗时</div>
+                <div class="duration-value">14<span class="duration-unit">天</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 总时间消耗统计 -->
+      <div class="summary-section">
+        <div class="summary-header">时间消耗统计</div>
+        <div class="summary-grid">
+          <div class="summary-item">
+            <div class="summary-value">36</div>
+            <div class="summary-label">总耗时（天）</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">22</div>
+            <div class="summary-label">已完成（天）</div>
+          </div>
+          <div class="summary-item">
+            <div class="summary-value">14</div>
+            <div class="summary-label">进行中（天）</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-marker legend-marker--completed"></div>
+          <span>已完成</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-marker legend-marker--current"></div>
+          <span>进行中</span>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
